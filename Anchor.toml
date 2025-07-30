@@ -1,0 +1,23 @@
+[features]
+seeds = false
+skip-lint = false
+
+[toolchain]
+anchor_version = "0.31.1"
+
+[programs.localnet]
+faucet = "3JtTpsLxSAYZweorwjU9cywAFLm8BUonGwQ54gqFnAGg"
+
+[programs.devnet]
+faucet = "3JtTpsLxSAYZweorwjU9cywAFLm8BUonGwQ54gqFnAGg"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+url = "https://api.devnet.solana.com"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts" 
