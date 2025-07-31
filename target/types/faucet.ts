@@ -28,6 +28,7 @@ export type Faucet = {
       "accounts": [
         {
           "name": "faucet",
+          "writable": true,
           "pda": {
             "seeds": [
               {
