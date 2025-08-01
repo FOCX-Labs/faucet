@@ -70,137 +70,137 @@ check_dependencies() {
     fi
 }
 
-# 安装依赖
+# Install dependencies
 install_dependencies() {
-    print_info "安装项目依赖..."
+    print_info "Installing project dependencies..."
     
     if [ ! -d "node_modules" ]; then
         npm install
-        print_success "依赖安装完成"
+        print_success "Dependencies installation completed"
     else
-        print_info "依赖已存在，跳过安装"
+        print_info "Dependencies already exist, skipping installation"
     fi
 }
 
-# 构建项目
+# Build project
 build_project() {
-    print_info "构建 Anchor 项目..."
+    print_info "Building Anchor project..."
     
     if [ ! -f "target/deploy/faucet.so" ] || [ ! -f "target/idl/faucet.json" ]; then
         anchor build
-        print_success "项目构建完成"
+        print_success "Project build completed"
     else
-        print_info "项目已构建，跳过构建步骤"
+        print_info "Project already built, skipping build step"
     fi
 }
 
-# 检查钱包
+# Check wallet
 check_wallet() {
-    print_info "检查钱包配置..."
+    print_info "Checking wallet configuration..."
     
     WALLET_PATH="${ANCHOR_WALLET:-$HOME/.config/solana/id.json}"
     
     if [ ! -f "$WALLET_PATH" ]; then
-        print_warning "钱包文件不存在: $WALLET_PATH"
-        print_info "正在生成新钱包..."
+        print_warning "Wallet file does not exist: $WALLET_PATH"
+        print_info "Generating new wallet..."
         
         mkdir -p "$(dirname "$WALLET_PATH")"
         solana-keygen new --outfile "$WALLET_PATH" --no-bip39-passphrase
-        print_success "钱包生成完成: $WALLET_PATH"
+        print_success "Wallet generation completed: $WALLET_PATH"
     else
-        print_success "钱包文件存在: $WALLET_PATH"
+        print_success "Wallet file exists: $WALLET_PATH"
     fi
     
-    # 设置环境变量
+    # Set environment variables
     export ANCHOR_WALLET="$WALLET_PATH"
 }
 
-# 检查网络连接
+# Check network connection
 check_network() {
-    print_info "检查网络连接..."
+    print_info "Checking network connection..."
     
-    # 设置默认 RPC 端点
+    # Set default RPC endpoint
     export ANCHOR_PROVIDER_URL="${ANCHOR_PROVIDER_URL:-https://api.devnet.solana.com}"
     
-    print_info "使用 RPC 端点: $ANCHOR_PROVIDER_URL"
+    print_info "Using RPC endpoint: $ANCHOR_PROVIDER_URL"
     
-    # 测试网络连接
+    # Test network connection
     if command -v solana &> /dev/null; then
         solana config set --url "$ANCHOR_PROVIDER_URL" > /dev/null 2>&1
         if solana cluster-version > /dev/null 2>&1; then
-            print_success "网络连接正常"
+            print_success "Network connection normal"
         else
-            print_warning "网络连接可能有问题，但将继续尝试运行测试"
+            print_warning "Network connection may have issues, but will continue to try running tests"
         fi
     fi
 }
 
-# 运行测试
+# Run tests
 run_tests() {
-    print_info "开始运行端到端测试..."
+    print_info "Starting end-to-end tests..."
     echo ""
     
-    # 设置环境变量
+    # Set environment variables
     export NODE_TLS_REJECT_UNAUTHORIZED=0
-    export RUST_LOG=error  # 减少日志输出
+    export RUST_LOG=error  # Reduce log output
     
-    # 运行测试
+    # Run tests
     if npm run test:e2e; then
         echo ""
-        print_success "所有测试通过！"
+        print_success "All tests passed!"
         
-        # 检查是否生成了测试报告
+        # Check if test report was generated
         if [ -f "test-report.md" ]; then
-            print_info "测试报告已生成: test-report.md"
+            print_info "Test report generated: test-report.md"
         fi
         
         return 0
     else
         echo ""
-        print_error "测试失败！"
+        print_error "Tests failed!"
         return 1
     fi
 }
 
-# 清理函数
+# Cleanup function
 cleanup() {
-    print_info "清理临时文件..."
-    # 这里可以添加清理逻辑
+    print_info "Cleaning up temporary files..."
+    # Cleanup logic can be added here
 }
 
-# 显示帮助信息
+# Show help information
 show_help() {
-    echo "Solana Faucet E2E 测试运行器"
+    echo "Solana Faucet E2E Test Runner"
     echo ""
-    echo "使用方法:"
-    echo "  ./run-tests.sh [选项]"
+    echo "Usage:"
+    echo "  ./run-tests.sh [options]"
     echo ""
-    echo "选项:"
-    echo "  -h, --help     显示此帮助信息"
-    echo "  -q, --quick    快速模式（跳过依赖检查）"
-    echo "  -c, --clean    清理模式（重新构建）"
-    echo "  -v, --verbose  详细输出模式"
+    echo "Options:"
+    echo "  -h, --help     Show this help information"
+    echo "  -q, --quick    Quick mode (skip dependency checks)"
+    echo "  -c, --clean    Clean mode (rebuild)"
+    echo "  -v, --verbose  Verbose output mode"
     echo ""
-    echo "环境变量:"
-    echo "  ANCHOR_PROVIDER_URL  Solana RPC 端点 (默认: https://api.devnet.solana.com)"
-    echo "  ANCHOR_WALLET        钱包文件路径 (默认: ~/.config/solana/id.json)"
-    echo "  HTTP_PROXY           HTTP 代理设置"
-    echo "  HTTPS_PROXY          HTTPS 代理设置"
+    echo "Environment variables:"
+    echo "  ANCHOR_PROVIDER_URL  Solana RPC endpoint (default: https://api.devnet.solana.com)"
+    echo "  ANCHOR_WALLET        Wallet file path (default: ~/.config/solana/id.json)"
+    echo "  HTTP_PROXY          HTTP proxy settings"
+    echo "  HTTPS_PROXY         HTTPS proxy settings"
     echo ""
-    echo "示例:"
-    echo "  ./run-tests.sh                    # 运行完整测试"
-    echo "  ./run-tests.sh --quick            # 快速运行测试"
-    echo "  ./run-tests.sh --clean            # 清理后运行测试"
+    echo "Examples:"
+    echo "  ./run-tests.sh                    # Run complete tests"
+    echo "  ./run-tests.sh --quick            # Quick run tests"
+    echo "  ./run-tests.sh --clean            # Clean and run tests"
     echo ""
 }
 
-# 主函数
+# Main function
 main() {
     local quick_mode=false
     local clean_mode=false
     local verbose_mode=false
     
-    # 解析命令行参数
+    # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
             -h|--help)
@@ -220,31 +220,31 @@ main() {
                 shift
                 ;;
             *)
-                print_error "未知选项: $1"
+                print_error "Unknown option: $1"
                 show_help
                 exit 1
                 ;;
         esac
     done
     
-    # 设置详细输出
+    # Set verbose output
     if [ "$verbose_mode" = true ]; then
         set -x
     fi
     
-    # 清理模式
+    # Clean mode
     if [ "$clean_mode" = true ]; then
-        print_info "清理模式：删除构建文件..."
+        print_info "Clean mode: deleting build files..."
         rm -rf target/
         rm -rf node_modules/
     fi
     
     print_header
     
-    # 注册清理函数
+    # Register cleanup function
     trap cleanup EXIT
     
-    # 执行检查和准备步骤
+    # Execute checks and preparation steps
     if [ "$quick_mode" = false ]; then
         check_dependencies
         install_dependencies
@@ -252,27 +252,27 @@ main() {
         check_wallet
         check_network
     else
-        print_info "快速模式：跳过依赖检查"
+        print_info "Quick mode: skipping dependency checks"
         install_dependencies
     fi
     
     echo ""
-    print_info "准备工作完成，开始运行测试..."
+    print_info "Preparation completed, starting test execution..."
     echo ""
     
-    # 运行测试
+    # Run tests
     if run_tests; then
         echo ""
-        print_success "测试运行完成！"
+        print_success "Test execution completed!"
         exit 0
     else
         echo ""
-        print_error "测试运行失败！"
+        print_error "Test execution failed!"
         exit 1
     fi
 }
 
-# 检查是否直接运行此脚本
+# Check if this script is run directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi

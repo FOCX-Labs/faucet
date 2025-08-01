@@ -5,7 +5,7 @@ import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 
-// 设置环境变量
+// Set environment variables
 process.env.HTTP_PROXY = "http://localhost:7897";
 process.env.HTTPS_PROXY = "http://localhost:7897";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";

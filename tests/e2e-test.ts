@@ -42,7 +42,7 @@ describe("Solana Faucet E2E Tests (Final)", () => {
   let faucetAuthority: PublicKey;
 
   before(async () => {
-    console.log("\n🚀 开始最终 E2E 测试设置...");
+    console.log("\n🚀 Starting final E2E test setup...");
 
     // Initialize connection and program
     provider = anchor.AnchorProvider.env();
@@ -54,7 +54,7 @@ describe("Solana Faucet E2E Tests (Final)", () => {
     const fundedWalletData = JSON.parse(fs.readFileSync("correct-funded-wallet.json", "utf8"));
     fundedWallet = Keypair.fromSecretKey(new Uint8Array(fundedWalletData));
 
-    console.log("资金钱包 (作为用户):", fundedWallet.publicKey.toBase58());
+    console.log("Funded wallet (as user):", fundedWallet.publicKey.toBase58());
 
     // Get faucet PDA
     [faucetPda] = PublicKey.findProgramAddressSync(
@@ -79,30 +79,30 @@ describe("Solana Faucet E2E Tests (Final)", () => {
     console.log("User Token Account:", userTokenAccount.toBase58());
   });
 
-  describe("1. 环境和配置验证", () => {
-    it("应该成功连接到 Solana 网络", async () => {
-      console.log("\n📡 测试网络连接...");
+  describe("1. Environment and Configuration Verification", () => {
+    it("should successfully connect to Solana network", async () => {
+      console.log("\n📡 Testing network connection...");
       const slot = await connection.getSlot();
       expect(slot).to.be.greaterThan(0);
-      console.log("✅ 网络连接成功，当前 slot:", slot);
+      console.log("✅ Network connection successful, current slot:", slot);
     });
 
-    it("应该验证资金钱包余额", async () => {
-      console.log("\n💰 验证资金钱包余额...");
+    it("should verify funded wallet balance", async () => {
+      console.log("\n💰 Verifying funded wallet balance...");
 
       const fundedBalance = await connection.getBalance(fundedWallet.publicKey);
-      console.log("资金钱包余额:", fundedBalance / LAMPORTS_PER_SOL, "SOL");
+      console.log("Funded wallet balance:", fundedBalance / LAMPORTS_PER_SOL, "SOL");
 
       expect(fundedBalance).to.be.greaterThan(0.5 * LAMPORTS_PER_SOL);
-      console.log("✅ 资金钱包余额充足");
+      console.log("✅ Funded wallet balance is sufficient");
     });
 
-    it("应该验证水龙头状态", async () => {
-      console.log("\n🔍 验证水龙头状态...");
+    it("should verify faucet status", async () => {
+      console.log("\n🔍 Verifying faucet status...");
 
       try {
         const faucetAccount = await program.account.faucet.fetch(faucetPda);
-        console.log("✅ 水龙头账户信息:");
+        console.log("✅ Faucet account information:");
         console.log("- Authority:", faucetAccount.authority.toBase58());
         console.log("- Token Mint:", faucetAccount.tokenMint.toBase58());
         console.log("- Token Account:", faucetAccount.tokenAccount.toBase58());
@@ -114,41 +114,41 @@ describe("Solana Faucet E2E Tests (Final)", () => {
         expect(faucetAccount.tokenMint).to.be.instanceOf(PublicKey);
         expect(faucetAccount.tokenAccount).to.be.instanceOf(PublicKey);
 
-        console.log("✅ 水龙头状态验证成功");
+        console.log("✅ Faucet status verification successful");
       } catch (error: any) {
-        console.log("❌ 无法获取水龙头状态:", error.message);
+        console.log("❌ Unable to get faucet status:", error.message);
         throw error;
       }
     });
 
-    it("应该验证水龙头代币余额", async () => {
-      console.log("\n💰 验证水龙头代币余额...");
+    it("should verify faucet token balance", async () => {
+      console.log("\n💰 Verifying faucet token balance...");
 
       try {
         const tokenAccount = await getAccount(connection, faucetTokenAccount);
         const balance = Number(tokenAccount.amount) / Math.pow(10, TOKEN_CONFIG.DECIMALS);
-        console.log("水龙头代币余额:", balance, "USDC-FOCX");
+        console.log("Faucet token balance:", balance, "USDC-FOCX");
 
         expect(balance).to.be.greaterThan(0);
-        console.log("✅ 水龙头代币余额验证成功");
+        console.log("✅ Faucet token balance verification successful");
       } catch (error: any) {
-        console.log("❌ 无法获取水龙头代币余额:", error.message);
+        console.log("❌ Unable to get faucet token balance:", error.message);
         throw error;
       }
     });
   });
 
-  describe("2. 用户代币账户管理", () => {
-    it("应该为用户创建代币账户", async () => {
-      console.log("\n🏗️ 为用户创建代币账户...");
+  describe("2. User Token Account Management", () => {
+    it("should create token account for user", async () => {
+      console.log("\n🏗️ Creating token account for user...");
 
       try {
         // Check if account already exists
         await getAccount(connection, userTokenAccount);
-        console.log("✅ 用户代币账户已存在");
+        console.log("✅ User token account already exists");
       } catch (error: any) {
         if (error.name === "TokenAccountNotFoundError") {
-          console.log("创建新的用户代币账户...");
+          console.log("Creating new user token account...");
 
           const createUserTokenAccountTx = new Transaction().add(
             createAssociatedTokenAccountInstruction(
@@ -160,7 +160,7 @@ describe("Solana Faucet E2E Tests (Final)", () => {
           );
 
           const signature = await provider.sendAndConfirm(createUserTokenAccountTx, [fundedWallet]);
-          console.log("✅ 用户代币账户创建成功，交易签名:", signature);
+          console.log("✅ User token account created successfully, transaction signature:", signature);
         } else {
           throw error;
         }
@@ -170,37 +170,37 @@ describe("Solana Faucet E2E Tests (Final)", () => {
       const accountInfo = await getAccount(connection, userTokenAccount);
       expect(accountInfo.mint.toBase58()).to.equal(TOKEN_CONFIG.USDC_FOCX_MINT.toBase58());
       expect(accountInfo.owner.toBase58()).to.equal(fundedWallet.publicKey.toBase58());
-      console.log("✅ 用户代币账户验证成功");
+      console.log("✅ User token account verification successful");
     });
 
-    it("应该检查用户代币余额", async () => {
-      console.log("\n💰 检查用户代币余额...");
+    it("should check user token balance", async () => {
+      console.log("\n💰 Checking user token balance...");
 
       const tokenAccount = await getAccount(connection, userTokenAccount);
       const balance = Number(tokenAccount.amount) / Math.pow(10, TOKEN_CONFIG.DECIMALS);
-      console.log("用户代币余额:", balance, "USDC-FOCX");
+      console.log("User token balance:", balance, "USDC-FOCX");
 
       expect(balance).to.be.greaterThanOrEqual(0);
-      console.log("✅ 用户代币余额检查成功");
+      console.log("✅ User token balance check successful");
     });
   });
 
-  describe("3. 兑换功能测试", () => {
-    it("应该测试 SOL 兑换代币功能", async () => {
-      console.log("\n💱 测试 SOL 兑换代币功能...");
+  describe("3. Exchange Function Tests", () => {
+    it("should test SOL to token exchange function", async () => {
+      console.log("\n💱 Testing SOL to token exchange function...");
 
       // Record balances before exchange
       const userSolBalanceBefore = await connection.getBalance(fundedWallet.publicKey);
       const userTokenBalanceBefore = await getAccount(connection, userTokenAccount);
       const faucetSolBalanceBefore = await connection.getBalance(faucetPda);
 
-      console.log("兑换前用户 SOL 余额:", userSolBalanceBefore / LAMPORTS_PER_SOL, "SOL");
+      console.log("User SOL balance before exchange:", userSolBalanceBefore / LAMPORTS_PER_SOL, "SOL");
       console.log(
-        "兑换前用户代币余额:",
+        "User token balance before exchange:",
         Number(userTokenBalanceBefore.amount) / Math.pow(10, TOKEN_CONFIG.DECIMALS),
         "USDC-FOCX"
       );
-      console.log("兑换前水龙头 SOL 余额:", faucetSolBalanceBefore / LAMPORTS_PER_SOL, "SOL");
+      console.log("Faucet SOL balance before exchange:", faucetSolBalanceBefore / LAMPORTS_PER_SOL, "SOL");
 
       try {
         // Execute exchange
@@ -219,20 +219,20 @@ describe("Solana Faucet E2E Tests (Final)", () => {
           .signers([fundedWallet])
           .rpc();
 
-        console.log("✅ 兑换成功，交易签名:", tx);
+        console.log("✅ Exchange successful, transaction signature:", tx);
 
         // Verify balances after exchange
         const userSolBalanceAfter = await connection.getBalance(fundedWallet.publicKey);
         const userTokenBalanceAfter = await getAccount(connection, userTokenAccount);
         const faucetSolBalanceAfter = await connection.getBalance(faucetPda);
 
-        console.log("兑换后用户 SOL 余额:", userSolBalanceAfter / LAMPORTS_PER_SOL, "SOL");
+        console.log("User SOL balance after exchange:", userSolBalanceAfter / LAMPORTS_PER_SOL, "SOL");
         console.log(
-          "兑换后用户代币余额:",
+          "User token balance after exchange:",
           Number(userTokenBalanceAfter.amount) / Math.pow(10, TOKEN_CONFIG.DECIMALS),
           "USDC-FOCX"
         );
-        console.log("兑换后水龙头 SOL 余额:", faucetSolBalanceAfter / LAMPORTS_PER_SOL, "SOL");
+        console.log("Faucet SOL balance after exchange:", faucetSolBalanceAfter / LAMPORTS_PER_SOL, "SOL");
 
         // Verify balance changes
         const expectedTokenIncrease = TEST_CONFIG.EXCHANGE_AMOUNT * TOKEN_CONFIG.EXCHANGE_RATE;
@@ -244,37 +244,37 @@ describe("Solana Faucet E2E Tests (Final)", () => {
           TEST_CONFIG.EXCHANGE_AMOUNT
         );
 
-        console.log("✅ 兑换金额验证成功");
+        console.log("✅ Exchange amount verification successful");
         console.log(
-          "- 用户获得代币:",
+          "- User received tokens:",
           actualTokenIncrease / Math.pow(10, TOKEN_CONFIG.DECIMALS),
           "USDC-FOCX"
         );
         console.log(
-          "- 水龙头收到 SOL:",
+          "- Faucet received SOL:",
           (faucetSolBalanceAfter - faucetSolBalanceBefore) / LAMPORTS_PER_SOL,
           "SOL"
         );
       } catch (error: any) {
-        console.log("⚠️ 兑换测试遇到错误:", error.message);
+        console.log("⚠️ Exchange test encountered error:", error.message);
 
         if (error.message.includes("InvalidAuthority")) {
-          console.log("📝 这是权限错误，说明需要正确的 authority 签名");
-          console.log("✅ 兑换逻辑验证成功（权限控制正常工作）");
+          console.log("📝 This is a permission error, indicating correct authority signature is required");
+          console.log("✅ Exchange logic verification successful (permission control working correctly)");
         } else if (error.message.includes("InsufficientTokens")) {
-          console.log("📝 这是代币不足错误，说明余额检查正常工作");
-          console.log("✅ 兑换逻辑验证成功（余额检查正常工作）");
+          console.log("📝 This is an insufficient tokens error, indicating balance check is working correctly");
+          console.log("✅ Exchange logic verification successful (balance check working correctly)");
         } else {
-          console.log("❌ 未预期的错误:", error.message);
-          // 不抛出错误，继续测试
+          console.log("❌ Unexpected error:", error.message);
+          // Don't throw error, continue testing
         }
       }
     });
   });
 
-  describe("4. 边界条件测试", () => {
-    it("应该测试零金额兑换", async () => {
-      console.log("\n❌ 测试零金额兑换...");
+  describe("4. Edge Case Tests", () => {
+    it("should test zero amount exchange", async () => {
+      console.log("\n❌ Testing zero amount exchange...");
 
       try {
         await program.methods
@@ -292,16 +292,16 @@ describe("Solana Faucet E2E Tests (Final)", () => {
           .signers([fundedWallet])
           .rpc();
 
-        console.log("⚠️ 零金额兑换被允许（可能是预期行为）");
+        console.log("⚠️ Zero amount exchange was allowed (may be expected behavior)");
       } catch (error: any) {
-        console.log("✅ 正确拒绝了零金额兑换");
-        console.log("错误信息:", error.message);
+        console.log("✅ Correctly rejected zero amount exchange");
+        console.log("Error message:", error.message);
       }
     });
   });
 
   after(async () => {
-    console.log("\n📊 最终测试总结:");
+    console.log("\n📊 Final test summary:");
 
     try {
       // Final state check
@@ -310,19 +310,19 @@ describe("Solana Faucet E2E Tests (Final)", () => {
       const userSolBalance = await connection.getBalance(fundedWallet.publicKey);
 
       console.log("=".repeat(50));
-      console.log("最终状态:");
-      console.log("- 水龙头 SOL 余额:", faucetSolBalance / LAMPORTS_PER_SOL, "SOL");
-      console.log("- 用户 SOL 余额:", userSolBalance / LAMPORTS_PER_SOL, "SOL");
+      console.log("Final status:");
+      console.log("- Faucet SOL balance:", faucetSolBalance / LAMPORTS_PER_SOL, "SOL");
+      console.log("- User SOL balance:", userSolBalance / LAMPORTS_PER_SOL, "SOL");
       console.log(
-        "- 用户代币余额:",
+        "- User token balance:",
         Number(userTokenBalance.amount) / Math.pow(10, TOKEN_CONFIG.DECIMALS),
         "USDC-FOCX"
       );
       console.log("=".repeat(50));
-      console.log("✅ 最终测试完成！");
+      console.log("✅ Final test completed!");
     } catch (error: any) {
-      console.log("⚠️ 最终状态检查错误:", error.message);
-      console.log("✅ 测试基本完成");
+      console.log("⚠️ Final status check error:", error.message);
+      console.log("✅ Test basically completed");
     }
   });
 });
