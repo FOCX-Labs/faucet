@@ -30,7 +30,7 @@ describe("Solana Faucet E2E Tests (Final)", () => {
   // Set environment variables with Helius RPC
   process.env.ANCHOR_PROVIDER_URL =
     process.env.ANCHOR_PROVIDER_URL ||
-    "https://devnet.helius-rpc.com/?api-key=48e26d41-1ec0-4a29-ac33-fa26d0112cef";
+    "https://api.devnet.solana.com";
 
   let provider: anchor.AnchorProvider;
   let program: Program<Faucet>;

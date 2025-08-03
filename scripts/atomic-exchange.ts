@@ -12,71 +12,71 @@ import { TOKEN_CONFIG } from "../config/token-config";
 import * as fs from "fs";
 
 /**
- * 稳定版原子交易脚本：在一个交易中创建 ATA + 兑换代币
+ * Stable version atomic transaction script: Create ATA + exchange tokens in one transaction
  */
 async function executeAtomicExchange(walletPath: string): Promise<string> {
-  console.log("🎯 执行原子交易：ATA 创建 + SOL 兑换代币");
+  console.log("🎯 Executing atomic transaction: ATA creation + SOL token exchange");
   console.log("=".repeat(60));
 
-  // 设置环境
+  // Set up environment
   process.env.ANCHOR_PROVIDER_URL =
-    "https://devnet.helius-rpc.com/?api-key=48e26d41-1ec0-4a29-ac33-fa26d0112cef";
+    "https://api.devnet.solana.com";
   process.env.ANCHOR_WALLET = walletPath;
 
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   const program = anchor.workspace.Faucet as Program<Faucet>;
 
-  // 加载用户钱包
+  // Load user wallet
   const walletData = JSON.parse(fs.readFileSync(walletPath, "utf8"));
   const userKeypair = anchor.web3.Keypair.fromSecretKey(new Uint8Array(walletData));
 
-  console.log("👤 用户信息:");
-  console.log("- 地址:", userKeypair.publicKey.toBase58());
+  console.log("👤 User information:");
+  console.log("- Address:", userKeypair.publicKey.toBase58());
 
-  // 硬编码的水龙头信息（避免网络问题）
+  // Hard-coded faucet information (to avoid network issues)
   const faucetTokenAccount = new PublicKey("FQjHQXy7S4m8Xhq1FCxomjr3YjjYm9hQsEL5S1vTkxvY");
   const faucetAuthority = new PublicKey("DjBk7pZfKTnvHg1nhowR6HzTJpVijgoWzZTArm7Yra6X");
 
-  // 计算用户 ATA 地址
+  // Calculate user ATA address
   const userTokenAccount = await getAssociatedTokenAddress(
     TOKEN_CONFIG.USDC_FOCX_MINT,
     userKeypair.publicKey
   );
 
-  console.log("\n🏦 账户信息:");
-  console.log("- 用户 ATA:", userTokenAccount.toBase58());
-  console.log("- 水龙头代币账户:", faucetTokenAccount.toBase58());
-  console.log("- 水龙头 Authority:", faucetAuthority.toBase58());
+  console.log("\n🏦 Account information:");
+  console.log("- User ATA:", userTokenAccount.toBase58());
+  console.log("- Faucet token account:", faucetTokenAccount.toBase58());
+  console.log("- Faucet Authority:", faucetAuthority.toBase58());
 
-  // 智能检查 ATA 是否存在
+  // Intelligent check if ATA exists
   let ataExists = false;
-  console.log("\n🔍 检查用户 ATA 是否存在...");
+  console.log("\n🔍 Checking if user ATA exists...");
   try {
     const tokenAccount = await getAccount(provider.connection, userTokenAccount);
     ataExists = true;
     const currentBalance = Number(tokenAccount.amount) / Math.pow(10, TOKEN_CONFIG.DECIMALS);
-    console.log("✅ ATA 已存在，将跳过创建");
-    console.log("- 当前代币余额:", currentBalance, TOKEN_CONFIG.SYMBOL);
+    console.log("✅ ATA already exists, creation will be skipped");
+    console.log("- Current token balance:", currentBalance, TOKEN_CONFIG.SYMBOL);
   } catch (error: any) {
     if (
       error.name === "TokenAccountNotFoundError" ||
       error.message.includes("could not find account")
     ) {
-      console.log("📝 ATA 不存在，将在交易中创建");
+      console.log("📝 ATA does not exist, will be created in transaction");
     } else {
-      console.log("⚠️ 检查 ATA 时出现其他错误，假设不存在:", error.message);
+      console.log("⚠️ Other error occurred while checking ATA, assuming it doesn't exist:", error.message);
     }
   }
 
-  // 构建智能原子交易
-  console.log("\n🔨 构建智能原子交易...");
+  // Build intelligent atomic transaction
+  console.log("\n🔨 Building intelligent atomic transaction...");
   const transaction = new Transaction();
   const exchangeAmount = 0.1 * LAMPORTS_PER_SOL;
 
-  // 1. 智能判断：如果需要，添加 ATA 创建指令
+  // 1. Intelligent decision: Add ATA creation instruction if needed
   if (!ataExists) {
-    console.log("📝 添加 ATA 创建指令（ATA 不存在）...");
+    console.log("📝 Adding ATA creation instruction (ATA does not exist)...");
     const createATAInstruction = createAssociatedTokenAccountInstruction(
       userKeypair.publicKey, // payer
       userTokenAccount, // ata
@@ -84,13 +84,13 @@ async function executeAtomicExchange(walletPath: string): Promise<string> {
       TOKEN_CONFIG.USDC_FOCX_MINT // mint
     );
     transaction.add(createATAInstruction);
-    console.log("  ✅ ATA 创建指令已添加");
+    console.log("  ✅ ATA creation instruction added");
   } else {
-    console.log("✅ 智能跳过 ATA 创建（ATA 已存在）");
+    console.log("✅ Intelligently skipped ATA creation (ATA already exists)");
   }
 
-  // 2. 添加 SOL 兑换代币指令
-  console.log("💱 添加兑换指令...");
+  // 2. Add SOL token exchange instruction
+  console.log("💱 Adding exchange instruction...");
 
   const exchangeInstruction = await program.methods
     .exchangeSolForTokens(new anchor.BN(exchangeAmount))
@@ -105,87 +105,87 @@ async function executeAtomicExchange(walletPath: string): Promise<string> {
 
   transaction.add(exchangeInstruction);
 
-  console.log(`✅ 智能原子交易构建完成，包含 ${transaction.instructions.length} 个指令`);
+  console.log(`✅ Intelligent atomic transaction built successfully, containing ${transaction.instructions.length} instructions`);
   if (!ataExists) {
-    console.log("- 指令 1: 创建 ATA（智能添加）");
-    console.log("- 指令 2: SOL 兑换代币");
-    console.log("🔒 两个指令将在同一个交易中执行，确保原子性");
+    console.log("- Instruction 1: Create ATA (intelligently added)");
+    console.log("- Instruction 2: SOL token exchange");
+    console.log("🔒 Both instructions will execute in the same transaction to ensure atomicity");
   } else {
-    console.log("- 指令 1: SOL 兑换代币");
-    console.log("🔒 单个指令交易（ATA 已存在，智能跳过创建）");
+    console.log("- Instruction 1: SOL token exchange");
+    console.log("🔒 Single instruction transaction (ATA already exists, creation intelligently skipped)");
   }
 
-  // 兑换参数
-  console.log("\n💱 兑换参数:");
-  console.log("- 兑换金额:", exchangeAmount / LAMPORTS_PER_SOL, "SOL");
+  // Exchange parameters
+  console.log("\n💱 Exchange parameters:");
+  console.log("- Exchange amount:", exchangeAmount / LAMPORTS_PER_SOL, "SOL");
   console.log(
-    "- 预期获得:",
+    "- Expected to receive:",
     (exchangeAmount * TOKEN_CONFIG.EXCHANGE_RATE) / Math.pow(10, TOKEN_CONFIG.DECIMALS),
     TOKEN_CONFIG.SYMBOL
   );
 
-  // 执行原子交易
-  console.log("\n📡 执行原子交易...");
+  // Execute atomic transaction
+  console.log("\n📡 Executing atomic transaction...");
   const signature = await provider.sendAndConfirm(transaction, [userKeypair]);
 
-  console.log("✅ 原子交易成功!");
-  console.log("交易签名:", signature);
-  console.log("🔗 交易链接:", `https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+  console.log("✅ Atomic transaction successful!");
+  console.log("Transaction signature:", signature);
+  console.log("🔗 Transaction link:", `https://explorer.solana.com/tx/${signature}?cluster=devnet`);
 
-  // 验证结果
-  console.log("\n🔍 验证交易结果...");
+  // Verify results
+  console.log("\n🔍 Verifying transaction results...");
   try {
     const tokenAccount = await getAccount(provider.connection, userTokenAccount);
     const tokenBalance = Number(tokenAccount.amount) / Math.pow(10, TOKEN_CONFIG.DECIMALS);
 
-    console.log("✅ 智能原子交易验证结果:");
+    console.log("✅ Intelligent atomic transaction verification results:");
     if (!ataExists) {
-      console.log("- ATA 创建: ✅ 成功（智能创建）");
+      console.log("- ATA creation: ✅ Successful (intelligently created)");
     } else {
-      console.log("- ATA 状态: ✅ 已存在（智能跳过创建）");
+      console.log("- ATA status: ✅ Already exists (creation intelligently skipped)");
     }
-    console.log("- ATA 地址:", userTokenAccount.toBase58());
-    console.log("- 最终代币余额:", tokenBalance, TOKEN_CONFIG.SYMBOL);
+    console.log("- ATA address:", userTokenAccount.toBase58());
+    console.log("- Final token balance:", tokenBalance, TOKEN_CONFIG.SYMBOL);
 
     const expectedTokens =
       (exchangeAmount * TOKEN_CONFIG.EXCHANGE_RATE) / Math.pow(10, TOKEN_CONFIG.DECIMALS);
-    console.log("- 本次获得代币:", expectedTokens, TOKEN_CONFIG.SYMBOL);
+    console.log("- Tokens received in this transaction:", expectedTokens, TOKEN_CONFIG.SYMBOL);
 
-    console.log("\n🎉 智能原子交易验证完成!");
+    console.log("\n🎉 Intelligent atomic transaction verification completed!");
   } catch (error: any) {
-    console.error("❌ 验证失败:", error.message);
+    console.error("❌ Verification failed:", error.message);
   }
 
   return signature;
 }
 
 /**
- * 主函数
+ * Main function
  */
 async function main() {
   try {
-    console.log("🎯 Solana 水龙头原子交易脚本");
+    console.log("🎯 Solana Faucet Atomic Transaction Script");
     console.log("=".repeat(60));
 
-    // 配置参数
+    // Configuration parameters
     const walletPath = process.argv[2] || "stable-test-wallet.json";
 
-    console.log("📋 配置信息:");
-    console.log("- 钱包文件:", walletPath);
-    console.log("- RPC 端点: https://devnet.helius-rpc.com");
+    console.log("📋 Configuration information:");
+    console.log("- Wallet file:", walletPath);
+    console.log("- RPC endpoint: https://devnet.helius-rpc.com");
 
-    // 执行原子交易
+    // Execute atomic transaction
     const signature = await executeAtomicExchange(walletPath);
 
-    console.log("\n🎉 脚本执行成功!");
-    console.log("📋 最终总结:");
-    console.log("- 交易签名:", signature);
-    console.log("- 兑换金额: 0.1 SOL");
-    console.log("- 预期代币: 1000 USDC-FOCX");
+    console.log("\n🎉 Script execution successful!");
+    console.log("📋 Final summary:");
+    console.log("- Transaction signature:", signature);
+    console.log("- Exchange amount: 0.1 SOL");
+    console.log("- Expected tokens: 1000 USDC-FOCX");
   } catch (error: any) {
-    console.error("\n❌ 脚本执行失败:", error.message);
+    console.error("\n❌ Script execution failed:", error.message);
     if (error.logs) {
-      console.error("错误日志:");
+      console.error("Error logs:");
       error.logs.forEach((log: string, index: number) => {
         console.error(`  ${index + 1}. ${log}`);
       });

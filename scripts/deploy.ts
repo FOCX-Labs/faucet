@@ -5,7 +5,7 @@ process.env.HTTP_PROXY = "http://localhost:7897";
 process.env.HTTPS_PROXY = "http://localhost:7897";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // Ignore SSL certificate verification
 
-process.env.ANCHOR_PROVIDER_URL = process.env.ANCHOR_PROVIDER_URL || "https://devnet.helius-rpc.com/?api-key=48e26d41-1ec0-4a29-ac33-fa26d0112cef";
+process.env.ANCHOR_PROVIDER_URL = process.env.ANCHOR_PROVIDER_URL || "https://api.devnet.solana.com";
 process.env.ANCHOR_WALLET = process.env.ANCHOR_WALLET || require("os").homedir() + "/.config/solana/id.json";
 
 console.log("🔧 Environment variables:");
@@ -38,7 +38,7 @@ async function main() {
   
   // Create connection
   const connection = new Connection(
-    process.env.ANCHOR_PROVIDER_URL || "https://devnet.helius-rpc.com/?api-key=48e26d41-1ec0-4a29-ac33-fa26d0112cef",
+    process.env.ANCHOR_PROVIDER_URL || "https://api.devnet.solana.com",
     {
       commitment: "confirmed",
       httpHeaders: {
