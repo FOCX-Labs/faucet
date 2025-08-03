@@ -11,7 +11,7 @@ process.env.HTTPS_PROXY = "http://localhost:7897";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 process.env.ANCHOR_PROVIDER_URL =
   process.env.ANCHOR_PROVIDER_URL ||
-  "https://devnet.helius-rpc.com/?api-key=48e26d41-1ec0-4a29-ac33-fa26d0112cef";
+  "https://api.devnet.solana.com";
 process.env.ANCHOR_WALLET =
   process.env.ANCHOR_WALLET || require("os").homedir() + "/.config/solana/id.json";
 
